@@ -1,3 +1,5 @@
+// With Rigth-Hand Rule Algorithm 
+
 #include <NewPing.h>
 #include <LiquidCrystal_I2C.h>
 #include <Adafruit_TCS34725.h>
