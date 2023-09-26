@@ -1,4 +1,4 @@
-// With Rigth-Hand Rule Algorithm 
+// With A Star Algorithm
 
 #include <NewPing.h>
 #include <LiquidCrystal_I2C.h>
@@ -21,10 +21,10 @@ Adafruit_TCS34725 TCS = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS3472
 
 // Ultrasonic sensors 
 
-#define PING_A 8
-#define PING_B 9
-#define PING_C 10
-#define PING_D 11
+#define PING_A 8 // Front
+#define PING_B 9 // Rigth
+#define PING_C 10 // Back
+#define PING_D 11 // Left
 
 // CONSTANTS
 
@@ -177,6 +177,10 @@ void stopMotors(short unsigned int duration) {
 
 void drive() {
 
+/*   Serial.println(sonar[0].ping_cm());
+  Serial.println(sonar[1].ping_cm());
+  Serial.println(sonar[2].ping_cm()); */
+  
   if(sonar[1].ping_cm() > WALL_DISTANCE) {
     rotateClockwise(ROTATE_TIME);
   }
