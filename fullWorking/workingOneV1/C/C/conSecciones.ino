@@ -315,18 +315,18 @@ void setup() {
 void loop(){
   color = getColor();
   if (findCheckpointIndex(color != -1)){
-    checkpoint = findCheckpointIndex(color);
+    checkpoint = findCheckpointIndex(color) + 1;
   }
   if (checkpoint == 0){
     drive();
   }
-  else if (checkpoint == 0){
+  else if (checkpoint == 1){
     // Función para bajar la rampa
   }
-  else if (checkpoint == 1){
+  else if (checkpoint == 2){
     // Función para segunda sección
   }
-  else if (checkpoint == 2){
+  else if (checkpoint == 3){
     // Función para seguir línea
   }
 }
