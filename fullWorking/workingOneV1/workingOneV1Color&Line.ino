@@ -184,8 +184,12 @@ String getColor(){
     color = "Amarillo";
   }
 
-  else if (R > 1.5 * B && B > 1.5 * B){
+  else if (R > 1.5 * B && B > 1.5 * G){
     color = "Rosa";
+  }
+
+  else if (R > B && B > G){
+    color = "Rosa Pastel"
   }
 
   else if (G > 1.5 * R && B > 1.5 * R){
