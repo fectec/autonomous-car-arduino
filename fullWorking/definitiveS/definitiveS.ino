@@ -72,11 +72,14 @@ String getColor() {
   String color = "NULL";
 
   TCS.getRawData(&R, &G, &B, &C);
-
+  Serial.println(R);
+  Serial.println(G);
+  Serial.println(B);
+  
   if (R < 30 && G < 30 && B < 30) {
     color = "BLACK";
   }
-  else if (R > 1.5 * G && R > 1.5 * B) {
+  else if (R > 1.5 * G && R > 1.5 * B && G <= 50 && B <= 50) {
     color = "RED";
   }
   else if (G > R && G > B) {
@@ -88,10 +91,10 @@ String getColor() {
   else if (R > 1.5 * B && G > 1.5 * B) {
     color = "YELLOW";
   }
-  else if (R > 1.5 * B && B > 1.5 * G) {
+  else if (R > 1.5 * B && B > 1.5 * G && G <= 100) {
     color = "PINK";
   }
-  else if (R > B && B > G) {
+  else if (R > B && R > G && G > 100) {
     color = "PASTEL PINK"; 
   }
   else if (G > 1.5 * R && B > 1.5 * R) {

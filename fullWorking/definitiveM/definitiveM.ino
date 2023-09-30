@@ -355,10 +355,11 @@ void loop() {
     }
   }
 
-  if(color == 'BLACK') {
-      displayText(color);
-  }
-
+    Serial.println(color);
+  Serial.println(distanceA);
+  Serial.println(distanceB);
+  Serial.println(distanceC);
+  
   if(checkpoint == 0) {
     drive();
   }

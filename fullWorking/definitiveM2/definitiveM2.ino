@@ -368,10 +368,10 @@ void loop() {
 
   delay(COMMUNICATION_TIME);
 
-  Serial.println(color);
+/*   Serial.println(color);
   Serial.println(distanceA);
   Serial.println(distanceB);
-  Serial.println(distanceC);
+  Serial.println(distanceC); */
 
   if(checkpoint == 0) {
 
