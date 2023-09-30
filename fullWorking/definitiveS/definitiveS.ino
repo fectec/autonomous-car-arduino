@@ -2,7 +2,6 @@
 // ULTRASONIC SENSORS
 // LINE FOLLOWING SENSORS
 // COLOR SENSOR
-// GYROSCOPE ACCELEROMETER
 
 #include <NewPing.h>
 #include <Adafruit_TCS34725.h>
@@ -19,9 +18,9 @@ Adafruit_TCS34725 TCS = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS3472
 
 // Line following sensors
 
-#define LINE_RIGTH 5
+#define LINE_LEFT 5 
 #define LINE_CENTER 6
-#define LINE_LEFT 7
+#define LINE_RIGTH 7
 
 // CONSTANTS
 
@@ -73,7 +72,7 @@ String getColor() {
   String color = "NULL";
 
   TCS.getRawData(&R, &G, &B, &C);
-  
+
   if (R < 30 && G < 30 && B < 30) {
     color = "BLACK";
   }
@@ -163,6 +162,4 @@ void loop() {
   }
 
   Serial.println(message);
-
-  delay(COMMUNICATION_TIME);
 }

@@ -4,7 +4,6 @@
 
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
-#include <Arduino.h>
 
 LiquidCrystal_I2C LCD(0x27, 16, 2);
 
@@ -26,6 +25,10 @@ LiquidCrystal_I2C LCD(0x27, 16, 2);
 
 // CONSTANTS
 
+// Ultrasonic sensors
+
+#define WALL_DISTANCE 10
+
 // Baud rate
 
 #define BAUD_RATE 115200
@@ -40,7 +43,7 @@ LiquidCrystal_I2C LCD(0x27, 16, 2);
 
 // Display
 
-#define DISPLAY_TIME 500
+#define DISPLAY_TIME 2000
 
 // Communication
 
@@ -66,7 +69,7 @@ unsigned short int distanceA = 0, distanceB = 0, distanceC = 0;
 
 // Lines
 
-unsigned short int lineRigth = 0, lineCenter = 0, lineLeft = 0;
+unsigned short int lineRight = 0, lineCenter = 0, lineLeft = 0;
 
 // MOTOR FUNCTIONS
 
@@ -207,41 +210,60 @@ void displayText(String text) {
 // Drive
 
 void drive() {
-
+  
+  if(distanceC > WALL_DISTANCE) {
+    moveLeft();
+  }
+  else if(distanceA < WALL_DISTANCE) {
+    moveRigth();
+  }
+  else if(distanceB < WALL_DISTANCE) {
+    moveUp();
+  }
+  else {
+    moveLeft();
+  }
 }
 
 // Ramp
 
 void goDownRamp() {
 
+  moveForward(5000);
+  moveBackward(150000);
 }
 
 // Cubes
 
 void moveCubes() {
-  
+  while(color != "GREEN") {
+    drive();
+  }
+
+  while(color == "GREEN") {
+    moveForward(0);
+  }
 }
 
 // Lines
-/* 
+
 void followLine() {
 
-  // LINE FOLLOWING SENSORS
-  if (center == 1 && left == 0 && right == 0) {
-    // Función de avanzar
+  if (lineCenter == 1 && lineLeft == 0 && lineRight == 0) {
+    moveForward(0);
   }
-  else if (left == 1 && center == 0 && right == 0) {
-    // Función de girar a la izquierda (debe ser un giro infinito no marcado a pasos)
+  else if (lineLeft == 1 && lineCenter == 0 && lineRight == 0) {
+    rotateCounterclockwise(0);
   }
-  else if (right == 1 && center == 0 && left == 0) {
-    // Función de girar a la derecha (debe ser un giro infinito no marcado a pasos)
+  else if (lineRight == 1 && lineCenter == 0 && lineLeft == 0) {
+    rotateClockwise(0);
   }
 }
- */
+
 // SETUP
 
 void setup() {
-
+  
   Serial.begin(BAUD_RATE);
 
   // CONFIGURATION OF PIN MODES
@@ -260,7 +282,9 @@ void setup() {
 
   pinMode(TRANSISTOR_BASE, OUTPUT);
 
-  pinMode(8, OUTPUT);
+  // START CAR
+
+  turnOnMotors();
 }
 
 // LOOP
@@ -303,7 +327,7 @@ void loop() {
           }
           else if(checkpoint == 3) {
             if(counter == 2) {
-              lineRigth = aux.toInt();
+              lineRight = aux.toInt();
             }
             else if(counter == 3) {
               lineCenter = aux.toInt();
@@ -325,9 +349,23 @@ void loop() {
     }
   }
 
-  delay(COMMUNICATION_TIME);
   Serial.println(color);
   Serial.println(distanceA);
   Serial.println(distanceB);
   Serial.println(distanceC);
+
+  displayText(color);
+
+  if(checkpoint == 0) {
+    drive();
+  }
+  else if(checkpoint == 1) {
+    goDownRamp();
+  }
+  else if(checkpoint == 2) {
+    moveCubes();
+  }
+  else if(checkpoint == 3) {
+    followLine();
+  }
 }
