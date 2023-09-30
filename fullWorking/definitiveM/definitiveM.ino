@@ -1,8 +1,11 @@
-#include <NewPing.h>
-#include <Adafruit_TCS34725.h>
-#include <LiquidCrystal_I2C.h>
+// INCLUDES:
+// MOTORS
+// DISPLAY
 
-Adafruit_TCS34725 TCS = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_1X);
+#include <LiquidCrystal_I2C.h>
+#include <Wire.h>
+#include <Arduino.h>
+
 LiquidCrystal_I2C LCD(0x27, 16, 2);
 
 // PINS SETUP
@@ -17,27 +20,11 @@ LiquidCrystal_I2C LCD(0x27, 16, 2);
 #define MOTOR_B_1 6
 #define MOTOR_B_2 7
 
-// Ultrasonic sensors 
-
-#define PING_A 8 // Front
-#define PING_B 9 // Rigth
-
 // Transistor
 
 #define TRANSISTOR_BASE 10
 
-// Line sensors
-
-#define LINE_LEFT 11
-#define LINE_CENTER 12
-#define LINE_RIGTH 13
-
 // CONSTANTS
-
-// Ultrasonic sensors
-
-#define SONAR_NUM 2
-#define MAX_DISTANCE 200
 
 // Baud rate
 
@@ -55,19 +42,31 @@ LiquidCrystal_I2C LCD(0x27, 16, 2);
 
 #define DISPLAY_TIME 500
 
+// Communication
+
+#define COMMUNICATION_TIME 100
+
 // GLOBAL VARIABLES
 
-// Ultrasonic sensors
+// Color
 
-NewPing sonar[SONAR_NUM] = {
-  NewPing(PING_A, PING_A, MAX_DISTANCE),
-  NewPing(PING_B, PING_B, MAX_DISTANCE),
-};
+String color = "";
 
-// Checkpoints
+// Message
 
-String checkpoints[] = {"CYAN", "PASTEL PINK", "PINK"};
+String receivedMessage = "";
+
+// Checkpoint
+
 short int checkpoint = 0;
+
+// Distances
+
+unsigned short int distanceA = 0, distanceB = 0, distanceC = 0;
+
+// Lines
+
+unsigned short int lineRigth = 0, lineCenter = 0, lineLeft = 0;
 
 // MOTOR FUNCTIONS
 
@@ -193,44 +192,6 @@ void moveRigth() {
   stopMotors(STOP_TIME);
 }
 
-// SENSOR FUNCTIONS
-
-// Color sensor
-
-String getColor() {  
-  uint16_t R, G, B, C;
-  String color = "NULL";
-
-  TCS.getRawData(&R, &G, &B, &C);
-  
-  if (R < 30 && G < 30 && B < 30) {
-    color = "BLACK";
-  }
-  else if (R > 1.5 * G && R > 1.5 * B) {
-    color = "RED";
-  }
-  else if (G > R && G > B) {
-    color = "GREEN";
-  }
-  else if (B > 1.5 * G && B > 1.5 * R) {
-    color = "BLUE";
-  }
-  else if (R > 1.5 * B && G > 1.5 * B) {
-    color = "YELLOW";
-  }
-  else if (R > 1.5 * B && B > 1.5 * G) {
-    color = "PINK";
-  }
-  else if (R > B && B > G) {
-    color = "PASTEL PINK"; 
-  }
-  else if (G > 1.5 * R && B > 1.5 * R) {
-    color = "CYAN";
-  }
-
-  return color;
-}
-
 // PERIPHEREAL FUNCTIONS
 
 // Display
@@ -239,20 +200,6 @@ void displayText(String text) {
   LCD.print(text);
   delay(DISPLAY_TIME);
   LCD.clear();
-}
-
-// CAR FUNCTIONS
-
-// Find checkpoint
-
-int findCheckpointIndex(String color) {
-  for (uint8_t i = 0; i < sizeof(checkpoints) / sizeof(checkpoints[0]); i++) {
-    if (checkpoints[i] == color) {
-      return i;  
-    }
-  }
-
-  return -1;  
 }
 
 // SECTION FUNCTIONS
@@ -272,17 +219,14 @@ void goDownRamp() {
 // Cubes
 
 void moveCubes() {
-
+  
 }
 
 // Lines
-
+/* 
 void followLine() {
 
-  short unsigned int left = digitalRead(LINE_LEFT);
-  short unsigned int center = digitalRead(LINE_CENTER);
-  short unsigned int right = digitalRead(LINE_RIGTH);
-
+  // LINE FOLLOWING SENSORS
   if (center == 1 && left == 0 && right == 0) {
     // Función de avanzar
   }
@@ -293,12 +237,12 @@ void followLine() {
     // Función de girar a la derecha (debe ser un giro infinito no marcado a pasos)
   }
 }
-
+ */
 // SETUP
 
 void setup() {
 
-  Serial.begin(BAUD_RATE); // Open serial monitor at 115200 baud to see ping results
+  Serial.begin(BAUD_RATE);
 
   // CONFIGURATION OF PIN MODES
 
@@ -314,33 +258,76 @@ void setup() {
 
   // Transistor
 
-  pinMode(OUTPUT, TRANSISTOR_BASE);
+  pinMode(TRANSISTOR_BASE, OUTPUT);
 
-  // START CAR
-
-  turnOnMotors();
+  pinMode(8, OUTPUT);
 }
 
 // LOOP
 
-void loop() {
-  String color = getColor();
-  displayText(color);
+void loop() { 
 
-  if (findCheckpointIndex(color) != -1) {
-    checkpoint = findCheckpointIndex(color) + 1;
+  while(Serial.available()) {
+    
+    char c = Serial.read();
+
+    if(c == '\n') {
+
+      short unsigned int receivedMessageSize = receivedMessage.length();
+      String aux = "";
+      short unsigned int counter = 0;
+
+      for (short unsigned int i = 0; i < receivedMessageSize; i++) {
+
+        if(receivedMessage[i] != ',') { 
+          aux += receivedMessage[i];
+        }
+        else {
+          if(counter == 0) {
+            color = aux;
+          }
+          else if(counter == 1) {
+            checkpoint = aux.toInt();
+          }
+
+          if(checkpoint ==  0) {
+            if(counter == 2) {
+              distanceA = aux.toInt();
+            }
+            else if(counter == 3) {
+              distanceB = aux.toInt();
+            }
+            else {
+              distanceC = aux.toInt();
+            }
+          }
+          else if(checkpoint == 3) {
+            if(counter == 2) {
+              lineRigth = aux.toInt();
+            }
+            else if(counter == 3) {
+              lineCenter = aux.toInt();
+            }
+            else {
+              lineLeft = aux.toInt();
+            }
+          }
+
+          aux = "";
+          counter++;
+        }
+      }
+
+      receivedMessage = ""; // Reiniciar el mensaje para la próxima lectura
+    } 
+    else {
+      receivedMessage += c;
+    }
   }
 
-  if (checkpoint == 0) {
-    drive();
-  }
-  else if (checkpoint == 1) {
-    goDownRamp();
-  }
-  else if (checkpoint == 2) {
-    moveCubes();
-  }
-  else if (checkpoint == 3) {
-    followLine();
-  }
+  delay(COMMUNICATION_TIME);
+  Serial.println(color);
+  Serial.println(distanceA);
+  Serial.println(distanceB);
+  Serial.println(distanceC);
 }
