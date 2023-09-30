@@ -22,7 +22,7 @@ LiquidCrystal_I2C LCD(0x27, 16, 2);
 
 // Transistor
 
-#define TRANSISTOR_BASE 10
+#define TRANSISTOR_BASE 8
 
 // CONSTANTS
 
