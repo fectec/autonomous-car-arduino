@@ -304,6 +304,7 @@ void setup() {
   // START CAR
 
   turnOnMotors();
+  moveForward();
 }
 
 void loop() {
@@ -366,6 +367,7 @@ void loop() {
     }
   }
 
+  moveForward();
   delay(COMMUNICATION_TIME);
 
 /*   Serial.println(color);
@@ -398,10 +400,10 @@ void loop() {
     pitch = 0.96 * gyroAngleY + 0.04 * accAngleY;
     angle = roll;
 
-    Serial.println("---------------");
+/*     Serial.println("---------------");
     Serial.println(roll);
     Serial.println(pitch);
-    Serial.println(angle);
+    Serial.println(angle); */
 
     drive();
 
@@ -595,3 +597,32 @@ void readGyro() {
   GyroY = (Wire.read() << 8 | Wire.read()) / 131.0;
   GyroZ = (Wire.read() << 8 | Wire.read()) / 131.0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

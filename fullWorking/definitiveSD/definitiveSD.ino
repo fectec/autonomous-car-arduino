@@ -3,11 +3,19 @@
 // LINE FOLLOWING SENSORS
 // COLOR SENSOR
 
+#include <LiquidCrystal_I2C.h>
 #include <NewPing.h>
 #include <Adafruit_TCS34725.h>
+#include <SoftWire.h>
 
+LiquidCrystal_I2C LCD(0x27, 16, 2);
 Adafruit_TCS34725 TCS = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_1X);
 
+
+#define SOFTWARE_SDA 9
+#define SOFTWARE_SCL 10
+
+SoftWire softWire(SOFTWARE_SDA, SOFTWARE_SCL);
 // PINS SETUP
 
 // Ultrasonic sensors 
@@ -37,7 +45,11 @@ Adafruit_TCS34725 TCS = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS3472
 
 // Communication
 
-#define COMMUNICATION_TIME 50
+#define COMMUNICATION_TIME 100
+
+// Display
+
+#define DISPLAY_TIME 1000
 
 // GLOBAL VARIABLES
 
@@ -72,6 +84,9 @@ String getColor() {
   String color = "NULL";
 
   TCS.getRawData(&R, &G, &B, &C);
+  Serial.println(R);
+  Serial.println(G);
+  Serial.println(B);
   
   if (R < 30 && G < 30 && B < 30) {
     color = "BLACK";
@@ -115,11 +130,25 @@ short int findCheckpointIndex(String color) {
   return -1;  
 }
 
+void displayText(String text) {
+
+  softWire.beginTransmission(0x27); // Address of the LCD
+  LCD.print("Hello, World!");
+  softWire.endTransmission();
+  delay(DISPLAY_TIME);
+  LCD.clear();
+}
+
 // SETUP
 
 void setup() {
 
   Serial.begin(BAUD_RATE);
+
+  softWire.begin();
+
+  LCD.backlight();   // Turn on the backlight
+  LCD.setCursor(0, 0);
 
   // CONFIGURATION OF PIN MODES
 
@@ -137,6 +166,8 @@ void loop() {
   // COLOR SENSOR
 
   color = getColor();
+
+  displayText(color);
 
   if(findCheckpointIndex(color) != -1) {
     checkpoint = findCheckpointIndex(color) + 1;
