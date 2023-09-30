@@ -27,7 +27,7 @@ Adafruit_TCS34725 TCS = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS3472
 // Ultrasonic sensors
 
 #define SONAR_NUM 3
-#define MAX_DISTANCE 500
+#define MAX_DISTANCE 100
 
 // Baud rate
 
@@ -162,4 +162,6 @@ void loop() {
   }
 
   Serial.println(message);
+
+  delay(COMMUNICATION_TIME);
 }

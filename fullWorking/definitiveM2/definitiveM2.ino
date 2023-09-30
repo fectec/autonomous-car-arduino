@@ -6,7 +6,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 
-LiquidCrystal_I2C LCD(0x27, 16, 2);
+LiquidCrystal_I2C LCD(0x3F, 16, 2);
 
 // PINS SETUP
 
@@ -45,17 +45,18 @@ const int MPU = 0x68;
 
 // Movement
 
-#define MOVE_TIME 900
-#define ROTATE_TIME 500
-#define STOP_TIME 900
+#define START_DELAY 8000
+/* #define MOVE_TIME 900
+#define ROTATE_TIME 500 */
+#define STOP_TIME 2000
 
 // Display
 
-#define DISPLAY_TIME 500
+#define DISPLAY_TIME 1000
 
 // Communication
 
-#define COMMUNICATION_TIME 100
+#define COMMUNICATION_TIME 50
 
 // GLOBAL VARIABLES
 
@@ -152,13 +153,13 @@ void moveMotorsBackwardB() {
   digitalWrite(MOTOR_B_2, LOW);
 }
 
-void moveForward(short unsigned int duration) {
+void moveForward(short unsigned int duration = 0) {
   moveMotorsForwardA();
   moveMotorsForwardB();
   delay(duration);
 } 
 
-void moveBackward(short unsigned int duration) {
+void moveBackward(short unsigned int duration = 0) {
   moveMotorsBackwardA();
   moveMotorsBackwardB();
   delay(duration);
@@ -166,13 +167,13 @@ void moveBackward(short unsigned int duration) {
 
 // Rotation
 
-void rotateClockwise(short unsigned int duration) {
+void rotateClockwise(short unsigned int duration = 0) {
   moveMotorsForwardA();
   moveMotorsBackwardB();
   delay(duration);
 }
 
-void rotateCounterclockwise(short unsigned int duration) {
+void rotateCounterclockwise(short unsigned int duration = 0) {
   moveMotorsBackwardA();
   moveMotorsForwardB();
   delay(duration);
@@ -190,7 +191,7 @@ void stopMotorsB() {
   digitalWrite(MOTOR_B_2, LOW);
 }
 
-void stopMotors(short unsigned int duration) {
+void stopMotors(short unsigned int duration = 0) {
   stopMotorsA();
   stopMotorsB();
   delay(duration);
@@ -201,6 +202,7 @@ void stopMotors(short unsigned int duration) {
 // Display
 
 void displayText(String text) {
+  LCD.setCursor(0, 2);
   LCD.print(text);
   delay(DISPLAY_TIME);
   LCD.clear();
@@ -211,28 +213,21 @@ void displayText(String text) {
 // Drive
 
 void drive() {
-  
-  if(distanceC > WALL_DISTANCE) {
-    targetAngle += 90;
-    if (targetAngle > 180) {
-      targetAngle -= 360;
-    }
-    isDriving = false;
-  }
-  else if(distanceA < WALL_DISTANCE) {
-    targetAngle -= 90;
-    if (targetAngle <= -180){
-      targetAngle += 360;
-    }
-    isDriving = false;
-  }
-  else if(distanceB < WALL_DISTANCE) {
+
+  if (distanceA > 10) {
     isDriving = true;
-  }
-  else {
+  } 
+  else if(distanceC > distanceB) {
     targetAngle += 90;
-    if (targetAngle > 180) {
-      targetAngle -= 360;
+    if(targetAngle > 180) {
+        targetAngle -= 360;
+    }
+      isDriving = false;
+  } 
+  else {
+    targetAngle -= 90;
+    if(targetAngle <= -180) {
+        targetAngle += 360;
     }
     isDriving = false;
   }
@@ -254,7 +249,7 @@ void moveCubes() {
   }
 
   while(color == "GREEN") {
-    moveForward(0);
+    moveForward();
   }
 }
 
@@ -263,13 +258,13 @@ void moveCubes() {
 void followLine() {
 
   if (lineCenter == 1 && lineLeft == 0 && lineRight == 0) {
-    moveForward(0);
+    moveForward();
   }
   else if (lineLeft == 1 && lineCenter == 0 && lineRight == 0) {
-    rotateCounterclockwise(0);
+    rotateCounterclockwise();
   }
   else if (lineRight == 1 && lineCenter == 0 && lineLeft == 0) {
-    rotateClockwise(0);
+    rotateClockwise();
   }
 }
 
@@ -295,16 +290,14 @@ void setup() {
 
   // CONFIGURATION OF GYROSCOPE ACCELOREMETER
   
-  Serial.begin(9600);
   Wire.begin();        
   Wire.beginTransmission(MPU);     
   Wire.write(0x6B);              
   Wire.write(0x00);              
   Wire.endTransmission(true);     
 
-  delay(15000);
   calculateError();
-  delay(20);
+  delay(START_DELAY);
 
   currentTime = micros();
 
@@ -314,6 +307,7 @@ void setup() {
 }
 
 void loop() {
+
   while(Serial.available()) {
     
     char c = Serial.read();
@@ -365,7 +359,7 @@ void loop() {
         }
       }
 
-      receivedMessage = ""; // Reiniciar el mensaje para la próxima lectura
+      receivedMessage = "";
     } 
     else {
       receivedMessage += c;
@@ -374,7 +368,10 @@ void loop() {
 
   delay(COMMUNICATION_TIME);
 
-  displayText(color);
+  Serial.println(color);
+  Serial.println(distanceA);
+  Serial.println(distanceB);
+  Serial.println(distanceC);
 
   if(checkpoint == 0) {
 
@@ -400,6 +397,11 @@ void loop() {
     roll = 0.96 * gyroAngleX + 0.04 * accAngleX;
     pitch = 0.96 * gyroAngleY + 0.04 * accAngleY;
     angle = roll;
+
+    Serial.println("---------------");
+    Serial.println(roll);
+    Serial.println(pitch);
+    Serial.println(angle);
 
     drive();
 
@@ -437,6 +439,8 @@ void loop() {
         prevIsDriving = isDriving;
       }
     }
+
+    stopMotors(STOP_TIME);
   }
   else if(checkpoint == 1) {
     goDownRamp();
@@ -451,7 +455,7 @@ void loop() {
 
 void driving () {
   int deltaAngle = round(targetAngle - angle);
-  moveForward(0);
+  moveForward();
 
   if(deltaAngle != 0) {
     controlSpeed();
@@ -491,14 +495,14 @@ void rotate (){
   int targetGyroX;
 
   if(abs(deltaAngle) <= 1) {
-    stopMotors(0);
+    stopMotors();
   } 
   else {
     if(angle > targetAngle) {
-      rotateCounterclockwise(0);
+      rotateCounterclockwise();
     } 
     else if(angle < targetAngle) {
-      rotateClockwise(0);
+      rotateClockwise();
     }
 
     if(abs(deltaAngle) > 30) {
@@ -566,6 +570,11 @@ void calculateError() {
 }
 
 void readAcceleration() {
+
+  while(!Serial.available()) {
+    ;
+  }
+
   Wire.beginTransmission(MPU);
   Wire.write(0x3B);
   Wire.endTransmission(false);

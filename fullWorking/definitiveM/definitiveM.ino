@@ -200,7 +200,7 @@ void moveRigth() {
 // Display
 
 void displayText(String text) {
-  LCD.print(text);
+  LCD.print(text);  
   delay(DISPLAY_TIME);
   LCD.clear();
 }
@@ -265,6 +265,12 @@ void followLine() {
 void setup() {
   
   Serial.begin(BAUD_RATE);
+
+  // CONFIGURATION OF DISPLAY
+  
+  LCD.clear();
+  LCD.backlight();
+  LCD.setCursor(0, 0);
 
   // CONFIGURATION OF PIN MODES
 
@@ -349,12 +355,9 @@ void loop() {
     }
   }
 
-  Serial.println(color);
-  Serial.println(distanceA);
-  Serial.println(distanceB);
-  Serial.println(distanceC);
-
-  displayText(color);
+  if(color == 'BLACK') {
+      displayText(color);
+  }
 
   if(checkpoint == 0) {
     drive();
